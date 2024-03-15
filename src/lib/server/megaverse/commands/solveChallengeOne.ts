@@ -2,13 +2,31 @@
 
 import { ActionErrors, type ActionResponse } from "$lib/types/action.types";
 import { BaseBodyType, CelestialBodyNumber } from "$lib/types/megaverse.types";
+import { Phase } from "$lib/types/user.types";
 import { formatGoalMap, formatMegaverse } from "$lib/utils/megaverse.utils";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../../auth";
 import { getGoalMapAction } from "../queries/getGoalMap";
 import { getMegaverseAction } from "../queries/getMegaverse";
 import { createPolyanetAction } from "./createPolyanet";
 
 export async function solveChallengeOneAction(): Promise<ActionResponse<string>> {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session) {
+            return {
+                success: false,
+                errorCode: ActionErrors.UNAUTHORIZED,
+                errorMessage: "Unauthorized",
+            };
+        }
+        if (session.user.phase !== Phase.PHASE_1) {
+            return {
+                success: false,
+                errorCode: ActionErrors.FORBIDDEN,
+                errorMessage: "You are not allowed to solve this challenge yet.",
+            };
+        }
         const res1 = await getGoalMapAction();
         if (!res1.success) {
             console.error("Error fetching goal map", res1.errorMessage);

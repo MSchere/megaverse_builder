@@ -2,7 +2,10 @@
 
 import { ActionErrors, type ActionResponse } from "$lib/types/action.types";
 import { BaseBodyType, CelestialBodyNumber, type Color, type Direction } from "$lib/types/megaverse.types";
+import { Phase } from "$lib/types/user.types";
 import { formatGoalMap, formatMegaverse } from "$lib/utils/megaverse.utils";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../../auth";
 import { getGoalMapAction } from "../queries/getGoalMap";
 import { getMegaverseAction } from "../queries/getMegaverse";
 import { createComethAction } from "./createCometh";
@@ -11,6 +14,21 @@ import { createSoloonAction } from "./createSoloon";
 
 export async function solveChallengeTwoAction(): Promise<ActionResponse<string>> {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session) {
+            return {
+                success: false,
+                errorCode: ActionErrors.UNAUTHORIZED,
+                errorMessage: "Unauthorized",
+            };
+        }
+        if (session.user.phase !== Phase.PHASE_2) {
+            return {
+                success: false,
+                errorCode: ActionErrors.FORBIDDEN,
+                errorMessage: "You are not allowed to solve this challenge yet.",
+            };
+        }
         const res = await getGoalMapAction();
         if (!res.success) {
             console.error("Error fetching goal map", res.errorMessage);

@@ -1,3 +1,4 @@
+import { Phase } from "$src/lib/types/user.types";
 import { Suspense } from "react";
 import AuthHeader from "./components/AuthHeader";
 import ChallengeButton from "./components/buttons/ChallengeButton";
@@ -38,8 +39,8 @@ export default function HomePage() {
                         </div>
                     </div>
                     <div className="flex justify-center gap-8">
-                        <ChallengeButton phase={1} />
-                        <ChallengeButton phase={2} />
+                        <ChallengeButton phase={Phase.PHASE_1} />
+                        <ChallengeButton phase={Phase.PHASE_2} />
                     </div>
                 </div>
             </div>

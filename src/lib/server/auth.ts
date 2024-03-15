@@ -2,6 +2,7 @@ import { env } from "$src/env";
 import { getServerSession, type DefaultSession, type NextAuthOptions } from "next-auth";
 
 import CredentialsProvider from "next-auth/providers/credentials";
+import { type Phase, type UserType } from "../types/user.types";
 import { loginAction } from "./auth/queries/ login";
 
 /**
@@ -14,8 +15,11 @@ declare module "next-auth" {
     interface Session extends DefaultSession {
         user: {
             id: string;
+            phase: Phase;
         } & DefaultSession["user"];
     }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    interface User extends UserType { }
 }
 
 /**
@@ -25,14 +29,22 @@ declare module "next-auth" {
  */
 export const authOptions: NextAuthOptions = {
     callbacks: {
-        session: ({ session, token }) => ({
-            ...session,
-            user: {
-                ...session.user,
-                id: token.sub,
-            },
-            maxAge: 30 * 24 * 60 * 60, // 30 days
-        }),
+        async jwt({ token, user }) {
+            if (user) {
+                token.id = user.id;
+                token.phase = user.phase;
+            }
+            return token;
+        },
+        async session({ session, token }) {
+            return {
+                ...session,
+                user: {
+                    ...token,
+                },
+                maxAge: 30 * 24 * 60 * 60, // 30 days
+            };
+        }
     },
     providers: [
         CredentialsProvider({
@@ -50,6 +62,7 @@ export const authOptions: NextAuthOptions = {
                 }
                 return {
                     id: credentials.id,
+                    phase: res.data
                 };
             },
         }),
